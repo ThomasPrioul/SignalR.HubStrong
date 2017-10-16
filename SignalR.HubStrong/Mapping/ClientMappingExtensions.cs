@@ -1,19 +1,19 @@
-﻿namespace SignalR.HubStrong.Mapping
-{
-    using Microsoft.AspNet.SignalR.Client;
-    using Newtonsoft.Json;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
+﻿using Microsoft.AspNet.SignalR.Client;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
+namespace SignalR.HubStrong.Mapping
+{
     public static class ClientMappingExtensions
     {
-        private delegate void InvokeMethod(params object[] parameters);
+        delegate void InvokeMethod(params object[] parameters);
 
         public static void MapClientMethods<T>(this IHubProxy hub, object hubClient)
         {
-            if (!typeof(T).IsInterface)
+            if (!typeof(T).GetTypeInfo().IsInterface)
             {
                 throw new InvalidOperationException("The generic type parameter T must be an interface when mapping client methods.");
             }
@@ -26,7 +26,7 @@
             hub.MapClientMethods(hubClient, methods);
         }
 
-        private static void MapClientMethods(this IHubProxy hub, object hubClient, IEnumerable<MethodInfo> methods)
+        static void MapClientMethods(this IHubProxy hub, object hubClient, IEnumerable<MethodInfo> methods)
         {
             foreach (var methodInfo in methods)
             {
@@ -64,7 +64,7 @@
             }
         }
 
-        private static object Invoke(object hubClient, MethodInfo method, object[] parameters)
+        static object Invoke(object hubClient, MethodInfo method, object[] parameters)
         {
             var typedParameters = new object[parameters.Length];
             var methodParameterTypes = method.GetParameters().Select(p => p.ParameterType).ToArray();

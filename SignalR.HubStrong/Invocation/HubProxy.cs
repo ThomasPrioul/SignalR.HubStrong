@@ -1,14 +1,15 @@
-﻿namespace SignalR.HubStrong.Invocation
-{
-    using Castle.DynamicProxy;
-    using Microsoft.AspNet.SignalR.Client;
-    using Microsoft.AspNet.SignalR.Client.Hubs;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using System;
-    using System.Linq;
-    using System.Threading.Tasks;
+﻿using Castle.DynamicProxy;
+using Microsoft.AspNet.SignalR.Client;
+using Microsoft.AspNet.SignalR.Client.Hubs;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
 
+namespace SignalR.HubStrong.Invocation
+{
     public interface IHubProxy<out T> : IHubProxy where T : class
     {
         Task Invoke(Action<T> method);
@@ -19,29 +20,26 @@
 
     public class HubProxy<THub> : IHubProxy<THub> where THub : class
     {
-        private readonly IHubProxy hubProxy;
-        private readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
+        readonly IHubProxy hubProxy;
+        readonly ProxyGenerator proxyGenerator = new ProxyGenerator();
 
         public HubProxy(IHubProxy hubProxy)
         {
-            if (!typeof(THub).IsInterface)
+            if (!typeof(THub).GetTypeInfo().IsInterface)
             {
                 throw new InvalidOperationException("The generic type parameter T must be an interface when creating a typed HubProxy.");
             }
             this.hubProxy = hubProxy;
         }
 
-        private interface IDummyProgress {}
+        interface IDummyProgress {}
 
-        public JsonSerializer JsonSerializer
-        {
-            get { return hubProxy.JsonSerializer; }
-        }
+        public JsonSerializer JsonSerializer => hubProxy.JsonSerializer;
 
         public JToken this[string name]
         {
-            get { return hubProxy[name]; }
-            set { hubProxy[name] = value; }
+            get => hubProxy[name];
+            set => hubProxy[name] = value;
         }
 
         public Task Invoke(string method, params object[] args)
@@ -98,8 +96,8 @@
 
         private class HubProxyInterceptor<TResult, TProgress> : IInterceptor
         {
-            private readonly IHubProxy hubProxy;
-            private readonly Action<TProgress> onProgress;
+            readonly IHubProxy hubProxy;
+            readonly Action<TProgress> onProgress;
 
             internal HubProxyInterceptor(IHubProxy hubProxy, Action<TProgress> onProgress)
             {
